@@ -1,0 +1,63 @@
+[
+  {
+    "sectionName": "UML Class Properties",
+    "fields": [
+      {
+        "fieldName": "Is Abstract",
+        "metadataPropertyName": "isAbstract",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Active",
+        "metadataPropertyName": "isActive",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Leaf",
+        "metadataPropertyName": "isLeaf",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Visibility",
+        "metadataPropertyName": "visibility",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "enumeration",
+        "allowedValues": [
+          "private", "public"
+        ],
+        "derived": false
+      }
+    ]
+  },
+  {
+    "sectionName": "XMI Model Properties",
+    "fields": [
+      {
+        "fieldName": "XMI ID",
+        "metadataPropertyName": "xmi:id",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "XMI Type",
+        "metadataPropertyName": "xmi:type",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      }
+    ]
+  }
+]

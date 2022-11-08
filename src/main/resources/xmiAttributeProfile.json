@@ -1,0 +1,119 @@
+[
+  {
+    "sectionName": "UML Attribute Properties",
+    "fields": [
+      {
+        "fieldName": "Is Aggregation",
+        "metadataPropertyName": "isAggregation",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Association",
+        "metadataPropertyName": "isAssociation",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Derived",
+        "metadataPropertyName": "isDerived",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Derived Union",
+        "metadataPropertyName": "isDerivedUnion",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is ID",
+        "metadataPropertyName": "isID",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Leaf",
+        "metadataPropertyName": "isLeaf",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Ordered",
+        "metadataPropertyName": "isOrdered",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Read Only",
+        "metadataPropertyName": "isReadOnly",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Static",
+        "metadataPropertyName": "isStatic",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Unique",
+        "metadataPropertyName": "isUnique",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Visibility",
+        "metadataPropertyName": "visibility",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "enumeration",
+        "allowedValues": [
+          "private", "public"
+        ],
+        "derived": false
+      }
+    ]
+  },
+  {
+    "sectionName": "XMI Model Properties",
+    "fields": [
+      {
+        "fieldName": "XMI ID",
+        "metadataPropertyName": "xmi:id",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "XMI Type",
+        "metadataPropertyName": "xmi:type",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      }
+    ]
+  }
+]
