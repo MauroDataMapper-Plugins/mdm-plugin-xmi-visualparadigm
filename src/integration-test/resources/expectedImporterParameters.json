@@ -1,14 +1,14 @@
 {
   "importer": {
-    "name": "ArtDecorDataModelImporterProviderService",
+    "name": "XmiVisualParadigmDataModelImporterProviderService",
     "version": "${json-unit.matches:version}",
-    "displayName": "Art Decor Importer",
-    "namespace": "uk.ac.ox.softeng.maurodatamapper.plugins.artdecor",
+    "displayName": "XMI (Visual Paradigm) Importer",
+    "namespace": "uk.ac.ox.softeng.maurodatamapper.plugins.xmi.visualparadigm",
     "allowsExtraMetadataKeys": true,
     "knownMetadataKeys": [
     ],
     "providerType": "DataModelImporter",
-    "paramClassType": "uk.ac.ox.softeng.maurodatamapper.plugins.artdecor.provider.importer.parameter.ArtDecorDataModelImporterProviderServiceParameters",
+    "paramClassType": "uk.ac.ox.softeng.maurodatamapper.plugins.xmi.visualparadigm.provider.importer.parameter.XmiVisualParadigmModelImporterProviderServiceParameters",
     "canImportMultipleDomains": true
   },
   "parameterGroups": [

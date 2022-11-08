@@ -63,7 +63,7 @@ class XmiVisualParadigmFunctionalSpec extends BaseFunctionalSpec {
 
     void 'test importer parameters'() {
         given:
-        String version = artDecorDataModelImporterProviderService.version
+        String version = xmiVisualParadigmDataModelImporterProviderService.version
         String expected = new String(loadTestFile('expectedImporterParameters.json'))
         String url = "importer/parameters/uk.ac.ox.softeng.maurodatamapper.plugins.xmi.visualparadigm/XmiVisualParadigmDataModelImporterProviderService/$version"
 
@@ -72,15 +72,6 @@ class XmiVisualParadigmFunctionalSpec extends BaseFunctionalSpec {
 
         then:
         verifyJsonResponse OK, expected
-    }
-
-    @Ignore('doesnt actually test anything')
-    void 'test artDecor dataModel'() {
-        given:
-        def result = new JsonSlurper().parseText(new String(loadTestFile('artdecor-test.json'), Charset.defaultCharset()))
-
-        expect:
-        result.datasets.each {(it == new DataModel(label: 'name'))}
     }
 
 }
