@@ -2,7 +2,7 @@
   "extends": [
     "config:base",
     ":dependencyDashboard",
-    ":reviewer(olliefreeman)",
+    ":reviewer(jamesrwelch)",
     ":label(dependencies)",
     ":prHourlyLimitNone"
   ],
