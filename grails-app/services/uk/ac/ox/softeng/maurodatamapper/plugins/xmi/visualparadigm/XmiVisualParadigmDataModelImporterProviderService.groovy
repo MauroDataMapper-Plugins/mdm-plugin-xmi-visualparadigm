@@ -112,17 +112,35 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         dataClass.label = umlClassName
                         dataClass.description = getCommentForDescription(umlClass)
                         dataClass.createdBy = currentUser.emailAddress
-                        addMetadata(umlClass.'@isAbstract', "isAbstract", XMI_NAMESPACE, dataClass, currentUser)
-                        addMetadata(umlClass.'@isActive', "isActive", XMI_NAMESPACE, dataClass, currentUser)
-                        addMetadata(umlClass.'@isLeaf', "isLeaf", XMI_NAMESPACE, dataClass, currentUser)
-                        addMetadata(umlClass.'@visibility', "visibility", XMI_NAMESPACE, dataClass, currentUser)
-                        addMetadata(umlClass.'@xmi:id', "xmi:id", XMI_NAMESPACE, dataClass, currentUser)
-                        addMetadata(umlClass.'@xmi:type', "xmi:type", XMI_NAMESPACE, dataClass, currentUser)
+
+                        List<String> classMetadataKeys = [
+                                "isAbstract", "isActive", "isLeaf", "visibility",
+                                "xmi:id", "xmi:type"
+                        ]
+
+                        classMetadataKeys.each {key ->
+                            addMetadata(umlClass["@${key}"], key, XMI_NAMESPACE, dataClass, currentUser)
+                        }
 
 
+                        dataModel.addToDataClasses(dataClass)
+                        dataClassesById[umlClassId] = dataClass
+                        dataClassesByName[umlClassName] = dataClass
+                    } else {
+                        log.warn("Duplicate class name: {}", umlClassName)
+                        dataClassesById[umlClassId] = dataClassesByName[umlClassName]
+                    }
+                }
 
-
-                        umlClass.ownedAttribute.each { attribute ->
+                // Now we'll go through all the attributes...
+                umlClasses.each { umlClass ->
+                    String umlClassId =  umlClass.'@xmi:id'
+                    DataClass dataClass = dataClassesById[umlClassId]
+                    if(!dataClass) {
+                        log.error("No data class found for id: ${umlClassId}" )
+                    }
+                    umlClass.ownedAttribute.each { attribute ->
+                        if(!dataClass.dataElements.find {it.label.equalsIgnoreCase(attribute.@name.toString())}) {
                             DataElement dataElement = new DataElement()
                             dataElement.label = attribute.@name
                             dataElement.description = getCommentForDescription(attribute)
@@ -133,7 +151,15 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                             }
                             DataType dataType = dataTypes[dataTypeName]
                             if (!dataType) {
-                                dataType = new PrimitiveType(label: dataTypeName)
+                                if(dataClassesById[dataTypeName]) {
+                                    DataClass referenceDataClass = dataClassesById[dataTypeName]
+
+                                    dataType = new ReferenceType(label: "Reference to ${referenceDataClass.label}",
+                                                    referenceClass: referenceDataClass)
+
+                                } else {
+                                    dataType = new PrimitiveType(label: dataTypeName)
+                                }
                                 dataType.createdBy = currentUser.emailAddress
                                 dataModel.addToDataTypes(dataType)
                                 dataTypes[dataTypeName] = dataType
@@ -142,28 +168,20 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
 
                             setMultiplicity(dataElement, attribute)
 
-                            addMetadata(attribute.'@aggregation', "aggregation", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isDerived', "isDerived", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isDerivedUnion', "isDerivedUnion", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isID', "isID", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isLeaf', "isLeaf", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isOrdered', "isOrdered", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isReadOnly', "isReadOnly", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isStatic', "isStatic", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@isUnique', "isUnique", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@visibility', "visibility", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@xmi:id', "xmi:id", XMI_NAMESPACE, dataElement, currentUser)
-                            addMetadata(attribute.'@xmi:type', "xmi:type", XMI_NAMESPACE, dataElement, currentUser)
+                            List<String> attributeMetadataKeys = [
+                                    'aggregation', 'isDerived', 'isDerivedUnion', 'isID', 'isLeaf',
+                                    'isOrdered', 'isReadOnly', 'isStatic', 'isUnique', 'visibility',
+                                    'xmi:id', 'xmi:type'
+                            ]
+                            attributeMetadataKeys.each {key ->
+                                addMetadata(attribute["@${key}"], key, XMI_NAMESPACE, dataElement, currentUser)
+                            }
+
 
 
 
                             dataClass.addToDataElements(dataElement)
                         }
-                        dataModel.addToDataClasses(dataClass)
-                        dataClassesById[umlClassId] = dataClass
-                        dataClassesByName[umlClassName] = dataClass
-                    } else {
-                        log.warn("Duplicate class name: {}", umlClassName)
                     }
                 }
 
@@ -182,6 +200,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                     }
                 }
 
+                // Now we'll go back through the package and find associations
                 umlAssociations.each { umlAssociation ->
                     GPathResult sourceOwnedEnd = umlAssociation.ownedEnd[0]
                     GPathResult targetOwnedEnd = umlAssociation.ownedEnd[1]
@@ -212,15 +231,15 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                     sourceAttribute.createdBy = currentUser.emailAddress
                     setMultiplicity(sourceAttribute, sourceOwnedEnd)
 
-                    addMetadata(sourceOwnedEnd.'@aggregation', "aggregation", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@association', "association", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@isDerived', "isDerived", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@isDerivedUnion', "isDerivedUnion", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@isLeaf', "isLeaf", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@isReadOnly', "isReadOnly", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@isStatic', "isStatic", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@xmi:id', "xmi:id", XMI_NAMESPACE, sourceAttribute, currentUser)
-                    addMetadata(sourceOwnedEnd.'@xmi:type', "xmi:type", XMI_NAMESPACE, sourceAttribute, currentUser)
+                    List<String> associationMetadataKeys = [
+                            "aggregation", "association", "isDerived", "isDerivedUnion", "isLeaf",
+                            "isReadOnly", "isStatic", "xmi:id", "xmi:type"
+                    ]
+                    associationMetadataKeys.each {key ->
+                        addMetadata(sourceOwnedEnd["@${key}"], key, XMI_NAMESPACE, sourceAttribute, currentUser)
+                    }
+
+
 
                     sourceClass.addToDataElements(sourceAttribute)
 
@@ -248,22 +267,13 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                     targetAttribute.createdBy = currentUser.emailAddress
                     setMultiplicity(targetAttribute, targetOwnedEnd)
 
-                    addMetadata(targetOwnedEnd.'@aggregation', "aggregation", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@association', "association", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@isDerived', "isDerived", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@isDerivedUnion', "isDerivedUnion", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@isLeaf', "isLeaf", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@isReadOnly', "isReadOnly", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@isStatic', "isStatic", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@xmi:id', "xmi:id", XMI_NAMESPACE, targetAttribute, currentUser)
-                    addMetadata(targetOwnedEnd.'@xmi:type', "xmi:type", XMI_NAMESPACE, targetAttribute, currentUser)
+                    associationMetadataKeys.each {key ->
+                        addMetadata(targetOwnedEnd["@${key}"], key, XMI_NAMESPACE, targetAttribute, currentUser)
+                    }
 
                     targetClass.addToDataElements(targetAttribute)
 
                 }
-
-                // Now we'll go back through the package and find associations
-
 
                 imported.add(dataModel)
             }
