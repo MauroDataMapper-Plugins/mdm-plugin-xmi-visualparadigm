@@ -107,7 +107,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 umlClasses.each { umlClass ->
                     String umlClassId =  umlClass.'@xmi:id'
                     String umlClassName = umlClass.'@name'
-                    if(!dataClassesByName[umlClassName]) {
+                    if(umlClassName && umlClassName != "" && !dataClassesByName[umlClassName]) {
                         DataClass dataClass = new DataClass()
                         dataClass.label = umlClassName
                         dataClass.description = getCommentForDescription(umlClass)
@@ -127,7 +127,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         dataClassesById[umlClassId] = dataClass
                         dataClassesByName[umlClassName] = dataClass
                     } else {
-                        log.warn("Duplicate class name: {}", umlClassName)
+                        log.warn("Duplicate or empty class name: {}", umlClassName)
                         dataClassesById[umlClassId] = dataClassesByName[umlClassName]
                     }
                 }
@@ -140,7 +140,9 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         log.error("No data class found for id: ${umlClassId}" )
                     }
                     umlClass.ownedAttribute.each { attribute ->
-                        if(!dataClass.dataElements.find {it.label.equalsIgnoreCase(attribute.@name.toString())}) {
+                        if(!attribute.@name || attribute.@name.toString() == "") {
+                            log.error("Element with no name (classId: umlClassId")
+                        } else if(!dataClass.dataElements.find {it.label.equalsIgnoreCase(attribute.@name.toString())}) {
                             DataElement dataElement = new DataElement()
                             dataElement.label = attribute.@name
                             dataElement.description = getCommentForDescription(attribute)
@@ -176,9 +178,6 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                             attributeMetadataKeys.each {key ->
                                 addMetadata(attribute["@${key}"], key, XMI_NAMESPACE, dataElement, currentUser)
                             }
-
-
-
 
                             dataClass.addToDataElements(dataElement)
                         }
@@ -219,7 +218,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         dataTypes[sourceAttributeTypeName] = sourceAttributeType
                     }
                     DataElement sourceAttribute = new DataElement()
-                    sourceAttribute.label = umlAssociation.'@name'
+                    sourceAttribute.label = umlAssociation.'@name'.toString().trim()
                     if(!sourceAttribute.label || sourceAttribute.label == "") {
                         sourceAttribute.label = targetClass.label
                     }
@@ -255,7 +254,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         dataTypes[targetAttributeTypeName] = targetAttributeType
                     }
                     DataElement targetAttribute = new DataElement()
-                    targetAttribute.label = umlAssociation.'@name'
+                    targetAttribute.label = umlAssociation.'@name'.toString().trim()
                     if(!targetAttribute.label || targetAttribute.label == "") {
                         targetAttribute.label = sourceClass.label
                     }
@@ -281,6 +280,8 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
         } catch (Exception ex) {
             throw new ApiInternalException('ART03', 'Could not import XMI (Visual Paradigm) models', ex)
         }
+
+
         imported
     }
 
