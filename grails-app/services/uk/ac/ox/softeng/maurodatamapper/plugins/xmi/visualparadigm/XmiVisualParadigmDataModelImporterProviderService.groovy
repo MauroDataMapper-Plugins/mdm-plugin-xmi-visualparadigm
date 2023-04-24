@@ -90,7 +90,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 Map<String, DataType> dataTypes = [:]
 
                 DataModel dataModel = new DataModel()
-                dataModel.label = umlModel.'@name'
+                dataModel.label = unescape(umlModel.'@name')
                 dataModel.createdBy = currentUser.emailAddress
 
                 Map<String, DataClass> dataClassesById = [:]
@@ -107,9 +107,9 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 umlClasses.each { umlClass ->
                     String umlClassId =  umlClass.'@xmi:id'
                     String umlClassName = umlClass.'@name'
-                    if(!dataClassesByName[umlClassName]) {
+                    if(umlClassName && umlClassName != "" && !dataClassesByName[umlClassName]) {
                         DataClass dataClass = new DataClass()
-                        dataClass.label = umlClassName
+                        dataClass.label = unescape(umlClassName)
                         dataClass.description = getCommentForDescription(umlClass)
                         dataClass.createdBy = currentUser.emailAddress
 
@@ -127,7 +127,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         dataClassesById[umlClassId] = dataClass
                         dataClassesByName[umlClassName] = dataClass
                     } else {
-                        log.warn("Duplicate class name: {}", umlClassName)
+                        log.warn("Duplicate or empty class name: {}", umlClassName)
                         dataClassesById[umlClassId] = dataClassesByName[umlClassName]
                     }
                 }
@@ -140,9 +140,11 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                         log.error("No data class found for id: ${umlClassId}" )
                     }
                     umlClass.ownedAttribute.each { attribute ->
-                        if(!dataClass.dataElements.find {it.label.equalsIgnoreCase(attribute.@name.toString())}) {
+                        if(!attribute.@name || attribute.@name.toString() == "") {
+                            log.error("Element with no name (classId: umlClassId")
+                        } else if(!dataClass.dataElements.find {it.label.equalsIgnoreCase(attribute.@name.toString())}) {
                             DataElement dataElement = new DataElement()
-                            dataElement.label = attribute.@name
+                            dataElement.label = unescape(attribute.@name)
                             dataElement.description = getCommentForDescription(attribute)
                             dataElement.createdBy = currentUser.emailAddress
                             String dataTypeName = attribute.'@type'
@@ -177,9 +179,6 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                                 addMetadata(attribute["@${key}"], key, XMI_NAMESPACE, dataElement, currentUser)
                             }
 
-
-
-
                             dataClass.addToDataElements(dataElement)
                         }
                     }
@@ -212,19 +211,19 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                     DataType sourceAttributeType = dataTypes[sourceAttributeTypeName]
                     if(!sourceAttributeType) {
                         sourceAttributeType = new ReferenceType()
-                        sourceAttributeType.label = sourceAttributeTypeName
+                        sourceAttributeType.label = unescape(sourceAttributeTypeName)
                         sourceAttributeType.referenceClass = targetClass
                         sourceAttributeType.createdBy = currentUser.emailAddress
                         dataModel.addToDataTypes(sourceAttributeType)
                         dataTypes[sourceAttributeTypeName] = sourceAttributeType
                     }
                     DataElement sourceAttribute = new DataElement()
-                    sourceAttribute.label = umlAssociation.'@name'
+                    sourceAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
                     if(!sourceAttribute.label || sourceAttribute.label == "") {
-                        sourceAttribute.label = targetClass.label
+                        sourceAttribute.label = unescape(targetClass.label)
                     }
                     if(sourceClass.dataElements.find { it.label == sourceAttribute.label}) {
-                        sourceAttribute.label = sourceAttribute.label + " " + targetClass.label
+                        sourceAttribute.label = unescape(sourceAttribute.label + " " + targetClass.label)
                     }
                     sourceAttribute.dataType = sourceAttributeType
                     sourceAttribute.description = getCommentForDescription(umlAssociation)
@@ -248,19 +247,19 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                     DataType targetAttributeType = dataTypes[targetAttributeTypeName]
                     if(!targetAttributeType) {
                         targetAttributeType = new ReferenceType()
-                        targetAttributeType.label = targetAttributeTypeName
+                        targetAttributeType.label = unescape(targetAttributeTypeName)
                         targetAttributeType.referenceClass = sourceClass
                         targetAttributeType.createdBy = currentUser.emailAddress
                         dataModel.addToDataTypes(targetAttributeType)
                         dataTypes[targetAttributeTypeName] = targetAttributeType
                     }
                     DataElement targetAttribute = new DataElement()
-                    targetAttribute.label = umlAssociation.'@name'
+                    targetAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
                     if(!targetAttribute.label || targetAttribute.label == "") {
-                        targetAttribute.label = sourceClass.label
+                        targetAttribute.label = unescape(sourceClass.label)
                     }
                     if(targetClass.dataElements.find { it.label == targetAttribute.label}) {
-                        targetAttribute.label = targetAttribute.label + " " + sourceClass.label
+                        targetAttribute.label = unescape(targetAttribute.label + " " + sourceClass.label)
                     }
                     targetAttribute.dataType = targetAttributeType
                     targetAttribute.description = getCommentForDescription(umlAssociation)
@@ -281,6 +280,8 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
         } catch (Exception ex) {
             throw new ApiInternalException('ART03', 'Could not import XMI (Visual Paradigm) models', ex)
         }
+
+
         imported
     }
 
@@ -321,6 +322,11 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
             Metadata md = new Metadata( value: value.toString(), key: key, namespace: namespace, createdBy: user.emailAddress)
             catalogueItem.addToMetadata(md)
         }
+    }
+
+    static String unescape(def input) {
+        String inputStr = input.toString()
+        inputStr.replace('%20', ' ')
     }
 
 
