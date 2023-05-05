@@ -115,5 +115,18 @@
         "derived": false
       }
     ]
+  },
+  {
+    "sectionName": "Visual Paradigm Extensions",
+    "fields" : [
+      {
+        "fieldName": "Visual Paradigm Extended Description",
+        "metadataPropertyName": "Owned Comment VP Extension",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "text",
+        "derived": false
+      }
+    ]
   }
 ]
