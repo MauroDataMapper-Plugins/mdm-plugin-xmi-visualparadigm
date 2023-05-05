@@ -19,6 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.xmi.visualparadigm
 
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
+import org.apache.commons.text.StringEscapeUtils
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiBadRequestException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiInternalException
 import uk.ac.ox.softeng.maurodatamapper.api.exception.ApiUnauthorizedException
@@ -96,15 +97,17 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 Map<String, DataClass> dataClassesById = [:]
                 Map<String, DataClass> dataClassesByName = [:]
 
-                List umlClasses = umlModel.'**'.findAll { element ->
-                    element.'@xmi:type' == 'uml:Class'
-                }
+                Map<String, Object> umlPackageClassMap = [:]
+
+                addClassesToPackageMap(umlModel, "", umlPackageClassMap)
 
                 List umlAssociations = umlModel.'**'.findAll { element ->
                     element.'@xmi:type' == 'uml:Association'
                 }
 
-                umlClasses.each { umlClass ->
+                umlPackageClassMap.each { packagePath, umlClass ->
+
+
                     String umlClassId =  umlClass.'@xmi:id'
                     String umlClassName = umlClass.'@name'
                     if(umlClassName && umlClassName != "" && !dataClassesByName[umlClassName]) {
@@ -122,6 +125,8 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                             addMetadata(umlClass["@${key}"], key, XMI_NAMESPACE, dataClass, currentUser)
                         }
 
+                        addMetadata(umlClass.ownedComment.Extension.htmlValue.'@value', "Owned Comment VP Extension", XMI_NAMESPACE, dataClass, currentUser)
+                        addMetadata(packagePath, "packagePath", XMI_NAMESPACE, dataClass, currentUser)
 
                         dataModel.addToDataClasses(dataClass)
                         dataClassesById[umlClassId] = dataClass
@@ -133,7 +138,7 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 }
 
                 // Now we'll go through all the attributes...
-                umlClasses.each { umlClass ->
+                umlPackageClassMap.values().each { umlClass ->
                     String umlClassId =  umlClass.'@xmi:id'
                     DataClass dataClass = dataClassesById[umlClassId]
                     if(!dataClass) {
@@ -179,13 +184,15 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                                 addMetadata(attribute["@${key}"], key, XMI_NAMESPACE, dataElement, currentUser)
                             }
 
+                            addMetadata(attribute.ownedComment.Extension.htmlValue.'@value', "Owned Comment VP Extension", XMI_NAMESPACE, dataElement, currentUser)
+
                             dataClass.addToDataElements(dataElement)
                         }
                     }
                 }
 
                 // Now we'll iterate back over the classes and find the generalisations
-                umlClasses.each { umlClass ->
+                umlPackageClassMap.values().each { umlClass ->
                     String umlClassId =  umlClass.'@xmi:id'
                     DataClass thisDataClass = dataClassesById[umlClassId]
                     umlClass.generalization.each { generalization ->
@@ -291,16 +298,20 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
         String description = ""
 
         if(xmlNode.ownedComment.size() > 0) {
-            if(xmlNode.ownedComment.Extension.size() > 0) {
-                description = xmlNode.ownedComment.Extension.htmlValue.'@value'
-            } else if(xmlNode.ownedComment.body.size() > 0) {
+            if(xmlNode.ownedComment.body.size() > 0) {
                 description = xmlNode.ownedComment.body.text()
+            } else if(xmlNode.ownedComment.Extension.size() > 0) {
+                description = xmlNode.ownedComment.Extension.htmlValue.'@value'
             }
         }
         if(description == "") {
             return null
         }
-        return description.replace("\\u00a0", " ").replaceAll("\\s+", " ").trim()
+        //description = description.replaceAll("\\s+", " ").trim()
+        description = description.trim()
+        description = StringEscapeUtils.unescapeJava(description)
+
+        return description
     }
 
     static void setMultiplicity(DataElement dataElement, GPathResult umlNode) {
@@ -327,6 +338,25 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
     static String unescape(def input) {
         String inputStr = input.toString()
         inputStr.replace('%20', ' ')
+    }
+
+
+    static void addClassesToPackageMap(def packageNode, String currentPath, Map<String, Object> packageClassMap) {
+        packageNode.'*'.each { childNode ->
+            if(childNode.'@name') {
+                String newPath = "${currentPath}.${childNode.'@name'}"
+                if(currentPath == "") {
+                    newPath = childNode.'@name'
+                }
+                if(childNode.'@xmi:type' == 'uml:Class') {
+                    packageClassMap[newPath] = childNode
+                }
+                else if(childNode.'@xmi:type' == 'uml:Package') {
+                    addClassesToPackageMap(childNode, newPath, packageClassMap)
+                }
+
+            }
+        }
     }
 
 

@@ -3,6 +3,14 @@
     "sectionName": "UML Class Properties",
     "fields": [
       {
+        "fieldName": "Package Path",
+        "metadataPropertyName": "packagePath",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
         "fieldName": "Is Abstract",
         "metadataPropertyName": "isAbstract",
         "minMultiplicity": 0,
@@ -56,6 +64,19 @@
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
         "dataType": "string",
+        "derived": false
+      }
+    ]
+  },
+  {
+    "sectionName": "Visual Paradigm Extensions",
+    "fields" : [
+      {
+        "fieldName": "Visual Paradigm Extended Description",
+        "metadataPropertyName": "Owned Comment VP Extension",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "text",
         "derived": false
       }
     ]
