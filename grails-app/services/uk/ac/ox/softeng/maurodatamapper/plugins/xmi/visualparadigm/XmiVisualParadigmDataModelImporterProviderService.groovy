@@ -207,78 +207,89 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 }
 
                 // Now we'll go back through the package and find associations
-                umlAssociations.each { umlAssociation ->
-                    GPathResult sourceOwnedEnd = umlAssociation.ownedEnd[0]
-                    GPathResult targetOwnedEnd = umlAssociation.ownedEnd[1]
-                    DataClass sourceClass = dataClassesById[sourceOwnedEnd.'@type']
-                    DataClass targetClass = dataClassesById[targetOwnedEnd.'@type']
+                umlAssociations
+                        .findAll { it.ownedEnd.size() == 2}
+                        .each { umlAssociation ->
+                    try {
 
-                    // Source data element
-                    String sourceAttributeTypeName = "Reference to " + targetClass.label
-                    DataType sourceAttributeType = dataTypes[sourceAttributeTypeName]
-                    if(!sourceAttributeType) {
-                        sourceAttributeType = new ReferenceType()
-                        sourceAttributeType.label = unescape(sourceAttributeTypeName)
-                        sourceAttributeType.referenceClass = targetClass
-                        sourceAttributeType.createdBy = currentUser.emailAddress
-                        dataModel.addToDataTypes(sourceAttributeType)
-                        dataTypes[sourceAttributeTypeName] = sourceAttributeType
+                        GPathResult sourceOwnedEnd = umlAssociation.ownedEnd[0]
+                        GPathResult targetOwnedEnd = umlAssociation.ownedEnd[1]
+
+                        DataClass sourceClass = dataClassesById[getOwnedEndTypeId(sourceOwnedEnd)]
+                        DataClass targetClass = dataClassesById[getOwnedEndTypeId(targetOwnedEnd)]
+
+
+                        // Source data element
+                        String sourceAttributeTypeName = "Reference to " + targetClass.label
+                        DataType sourceAttributeType = dataTypes[sourceAttributeTypeName]
+                        if (!sourceAttributeType) {
+                            sourceAttributeType = new ReferenceType()
+                            sourceAttributeType.label = unescape(sourceAttributeTypeName)
+                            sourceAttributeType.referenceClass = targetClass
+                            sourceAttributeType.createdBy = currentUser.emailAddress
+                            dataModel.addToDataTypes(sourceAttributeType)
+                            dataTypes[sourceAttributeTypeName] = sourceAttributeType
+                        }
+                        DataElement sourceAttribute = new DataElement()
+                        sourceAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
+                        if (!sourceAttribute.label || sourceAttribute.label == "") {
+                            sourceAttribute.label = unescape(targetClass.label)
+                        }
+                        if (sourceClass.dataElements.find { it.label == sourceAttribute.label }) {
+                            sourceAttribute.label = unescape(sourceAttribute.label + " " + targetClass.label)
+                        }
+                        sourceAttribute.dataType = sourceAttributeType
+                        sourceAttribute.description = getCommentForDescription(umlAssociation)
+                        sourceAttribute.createdBy = currentUser.emailAddress
+                        setMultiplicity(sourceAttribute, sourceOwnedEnd)
+
+                        List<String> associationMetadataKeys = [
+                                "aggregation", "association", "isDerived", "isDerivedUnion", "isLeaf",
+                                "isReadOnly", "isStatic", "xmi:id", "xmi:type"
+                        ]
+                        associationMetadataKeys.each { key ->
+                            addMetadata(sourceOwnedEnd["@${key}"], key, XMI_NAMESPACE, sourceAttribute, currentUser)
+                        }
+
+
+                        sourceClass.addToDataElements(sourceAttribute)
+
+                        // Target data element
+                        String targetAttributeTypeName = "Reference to " + sourceClass.label
+                        DataType targetAttributeType = dataTypes[targetAttributeTypeName]
+                        if (!targetAttributeType) {
+                            targetAttributeType = new ReferenceType()
+                            targetAttributeType.label = unescape(targetAttributeTypeName)
+                            targetAttributeType.referenceClass = sourceClass
+                            targetAttributeType.createdBy = currentUser.emailAddress
+                            dataModel.addToDataTypes(targetAttributeType)
+                            dataTypes[targetAttributeTypeName] = targetAttributeType
+                        }
+                        DataElement targetAttribute = new DataElement()
+                        targetAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
+                        if (!targetAttribute.label || targetAttribute.label == "") {
+                            targetAttribute.label = unescape(sourceClass.label)
+                        }
+                        if (targetClass.dataElements.find { it.label == targetAttribute.label }) {
+                            targetAttribute.label = unescape(targetAttribute.label + " " + sourceClass.label)
+                        }
+                        targetAttribute.dataType = targetAttributeType
+                        targetAttribute.description = getCommentForDescription(umlAssociation)
+                        targetAttribute.createdBy = currentUser.emailAddress
+                        setMultiplicity(targetAttribute, targetOwnedEnd)
+
+                        associationMetadataKeys.each { key ->
+                            addMetadata(targetOwnedEnd["@${key}"], key, XMI_NAMESPACE, targetAttribute, currentUser)
+                        }
+
+                        targetClass.addToDataElements(targetAttribute)
+                    } catch (Exception e) {
+                        // We've been unable to create an association - swallow it for now, but log
+                        log.debug("Unable to create association")
+                        log.debug(umlAssociation.toString())
+                        log.debug(e.getMessage())
+                        log.debug(e.stackTrace.toString())
                     }
-                    DataElement sourceAttribute = new DataElement()
-                    sourceAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
-                    if(!sourceAttribute.label || sourceAttribute.label == "") {
-                        sourceAttribute.label = unescape(targetClass.label)
-                    }
-                    if(sourceClass.dataElements.find { it.label == sourceAttribute.label}) {
-                        sourceAttribute.label = unescape(sourceAttribute.label + " " + targetClass.label)
-                    }
-                    sourceAttribute.dataType = sourceAttributeType
-                    sourceAttribute.description = getCommentForDescription(umlAssociation)
-                    sourceAttribute.createdBy = currentUser.emailAddress
-                    setMultiplicity(sourceAttribute, sourceOwnedEnd)
-
-                    List<String> associationMetadataKeys = [
-                            "aggregation", "association", "isDerived", "isDerivedUnion", "isLeaf",
-                            "isReadOnly", "isStatic", "xmi:id", "xmi:type"
-                    ]
-                    associationMetadataKeys.each {key ->
-                        addMetadata(sourceOwnedEnd["@${key}"], key, XMI_NAMESPACE, sourceAttribute, currentUser)
-                    }
-
-
-
-                    sourceClass.addToDataElements(sourceAttribute)
-
-                    // Target data element
-                    String targetAttributeTypeName = "Reference to " + sourceClass.label
-                    DataType targetAttributeType = dataTypes[targetAttributeTypeName]
-                    if(!targetAttributeType) {
-                        targetAttributeType = new ReferenceType()
-                        targetAttributeType.label = unescape(targetAttributeTypeName)
-                        targetAttributeType.referenceClass = sourceClass
-                        targetAttributeType.createdBy = currentUser.emailAddress
-                        dataModel.addToDataTypes(targetAttributeType)
-                        dataTypes[targetAttributeTypeName] = targetAttributeType
-                    }
-                    DataElement targetAttribute = new DataElement()
-                    targetAttribute.label = unescape(umlAssociation.'@name'.toString().trim())
-                    if(!targetAttribute.label || targetAttribute.label == "") {
-                        targetAttribute.label = unescape(sourceClass.label)
-                    }
-                    if(targetClass.dataElements.find { it.label == targetAttribute.label}) {
-                        targetAttribute.label = unescape(targetAttribute.label + " " + sourceClass.label)
-                    }
-                    targetAttribute.dataType = targetAttributeType
-                    targetAttribute.description = getCommentForDescription(umlAssociation)
-                    targetAttribute.createdBy = currentUser.emailAddress
-                    setMultiplicity(targetAttribute, targetOwnedEnd)
-
-                    associationMetadataKeys.each {key ->
-                        addMetadata(targetOwnedEnd["@${key}"], key, XMI_NAMESPACE, targetAttribute, currentUser)
-                    }
-
-                    targetClass.addToDataElements(targetAttribute)
-
                 }
 
                 imported.add(dataModel)
@@ -356,6 +367,16 @@ class XmiVisualParadigmDataModelImporterProviderService extends DataModelImporte
                 }
 
             }
+        }
+    }
+
+    String getOwnedEndTypeId(GPathResult ownedEnd) {
+        if(ownedEnd.'@type') {
+            return ownedEnd.'@type'.toString()
+        } else if(ownedEnd.type && ownedEnd.type.'@idref') {
+            return ownedEnd.type.'@idref'.toString()
+        } else {
+            return null
         }
     }
 
