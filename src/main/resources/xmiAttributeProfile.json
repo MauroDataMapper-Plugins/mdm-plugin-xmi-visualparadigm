@@ -4,18 +4,18 @@
     "fields": [
       {
         "fieldName": "Is Aggregation",
-        "metadataPropertyName": "isAggregation",
+        "metadataPropertyName": "aggregation",
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
-        "dataType": "boolean",
+        "dataType": "string",
         "derived": false
       },
       {
-        "fieldName": "Is Association",
-        "metadataPropertyName": "isAssociation",
+        "fieldName": "Association",
+        "metadataPropertyName": "association",
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
-        "dataType": "boolean",
+        "dataType": "string",
         "derived": false
       },
       {
@@ -40,6 +40,14 @@
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
         "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Navigable",
+        "metadataPropertyName": "isNavigable",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
         "derived": false
       },
       {
@@ -122,6 +130,27 @@
       {
         "fieldName": "Visual Paradigm Extended Description",
         "metadataPropertyName": "Owned Comment VP Extension",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "text",
+        "derived": false
+      }
+    ]
+  },
+  {
+    "sectionName": "Additional Association Details",
+    "fields" : [
+      {
+        "fieldName": "Opposite End Minimum Multiplicity",
+        "metadataPropertyName": "oppositeMinMultiplicity",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "text",
+        "derived": false
+      },
+      {
+        "fieldName": "Opposite End Maximum Multiplicity",
+        "metadataPropertyName": "oppositeMaxMultiplicity",
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
         "dataType": "text",
